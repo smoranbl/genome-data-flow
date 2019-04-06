@@ -1,4 +1,5 @@
 
+
 class Object:
 
     def __init__(self, **kwargs):
@@ -25,3 +26,6 @@ class Object:
         self.tags = kwargs.get('tags', None)
         # administrative attributes
         self.registration_date = kwargs.get('registration_date', None)
+
+    def __repr__(self):
+        return self.physical_name

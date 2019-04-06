@@ -3,39 +3,35 @@ import httplib2
 from googleapiclient import discovery
 from oauth2client import file, client, tools
 
-# API_SCOPE: Default API scope for read spreadsheets in readonly mode
-API_SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-# CREDENTIALS_PATH: Path for storage temporal credentials once the first
-CREDENTIALS_PATH = '../resources/google_api/credentials.json'
-# SECRETS_PATH: Path for the client secret json that contains the google_api values
-SECRETS_PATH = '../resources/google_api/client_id.json'
 
-
-def create_credentials(filename=SECRETS_PATH, scope=API_SCOPE, storage=None):
+def create_credentials(secret, scope, storage):
     """
-    :param filename: string, Contains the path for client secrets json parameters
+    :param secret: string, Contains the path for client secrets json parameters
     :param scope: string, Attribute for delimit the scope of the  Google API requests
     :param storage: oauth2client.file.Storage, Contains the path for credentials.json temporal storage
     :return: oauth2client.client.Credentials, Credentials with the authorization token
     """
-    flow = client.flow_from_clientsecrets(filename=filename, scope=scope)
+    flow = client.flow_from_clientsecrets(filename=secret, scope=scope)
     # Execute all steps needed for get new authorization credentials
     return tools.run_flow(flow, storage)
 
 
-def get_credentials(filename=SECRETS_PATH, scope=API_SCOPE, temp_filename=CREDENTIALS_PATH):
+def get_credentials(secret, scope, temp_cred):
     """
-    :param filename: string, Contains the path for client secrets json parameters
+    :param secret: string, Contains the path for client secrets json parameters
     :param scope: string, Attribute for delimit the scope of the  Google API requests
-    :param temp_filename: string, Contains the path for credentials.json temporal storage
+    :param temp_cred: string, Contains the path for credentials.json temporal storage
     :return: oauth2client.client.Credentials, Credentials with the authorization token
     """
-    storage = file.Storage(temp_filename)
+    storage = file.Storage(temp_cred)
     credentials = storage.get()
     # TODO: Pending to review the function "credentials.invalid" for exception management
     #       This function can throw a WARNING and the idea is to put it in a LOG.INFO
     # If temporal credentials is in force return it, other way create new credentials
-    return create_credentials(filename, scope, storage) if not credentials or credentials.invalid else credentials
+    if not credentials or credentials.invalid:
+        credentials = create_credentials(secret, scope, storage)
+
+    return credentials
 
 
 def get_sheet_service(credentials):
@@ -57,4 +53,4 @@ def get_spreadsheet(service, spreadsheet_id, sheet_range):
     :return: List, Metadata and matrix data of the spreadsheet
     """
     # API call for get spreadsheet data and metadata
-    return service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=sheet_range).execute()
+    return service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=sheet_range).execute()['values']
