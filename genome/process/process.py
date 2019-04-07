@@ -1,8 +1,8 @@
 
+"""
 import networkx as nx
 
 from entities import Object
-
 
 def process_data(schema, data):
     graph = nx.Graph()
@@ -17,3 +17,4 @@ def process_object(row):
     attrs = dict(zip(schema.get_schema_headers(), row))
     node = Object(**attrs)
     graph.add_node(node, attr=':Object')
+"""
