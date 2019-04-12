@@ -29,3 +29,21 @@ class Object:
 
     def __repr__(self):
         return self.physical_name
+
+    def __str__(self):
+        return self.physical_name
+
+
+class Source:
+
+    def __init__(self, **kwargs):
+        self.physical_name = kwargs.get('source_physical_name', None)
+        self.type = kwargs.get('source_type', None)
+        self.system = kwargs.get('source_system', None)
+        self.path = kwargs.get('source_path', None)
+
+    def __repr__(self):
+        return self.physical_name
+
+    def __str__(self):
+        return self.physical_name

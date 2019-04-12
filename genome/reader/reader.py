@@ -21,7 +21,7 @@ def load_schema(version, level):
 
     template = rh.get_schema_template(version, level)
     # Creates a list of Attribute object instances with loaded json distribution and order it
-    attrs = map(lambda c: Attribute(c['name'], c['description'], c['position'], c['group']), template)
+    attrs = map(lambda c: Attribute(c['name'], c['description'], c['position'], c['family'], c['group']), template)
     attrs = rh.order_schema_template(list(attrs))
 
     return Schema(version, level, attrs)

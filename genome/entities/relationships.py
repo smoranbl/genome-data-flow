@@ -1,5 +1,5 @@
 
-class Process:
+class Job:
 
     def __init__(self, **kwargs):
         self.job_id = kwargs.get('physical_name', None)

@@ -16,13 +16,7 @@ raw_range = 'DC-DD-Object-RAW!A5:AI'
 master_range = 'DC-DD-Object-MASTER!A5:AI'
 
 
-""" -> File handler configuration for logge
-f_handler = logging.FileHandler('../resources/genome.log')
-f_handler.setLevel(logging.ERROR)
-f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-f_handler.setFormatter(f_format)
-logger.addHandler(f_handler)
-"""
+# TODO: Must to reorganize all this logging stuff
 # Create a custom logger
 logger = logging.getLogger('GENOME')
 logger.setLevel(logging.INFO)
