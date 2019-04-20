@@ -1,59 +1,54 @@
 
-import settings as stt
+import json as js
 
-from entities import Schema, Attribute
 from reader import helpers as rh
+from services import google as gs
 
 
-# Variable to store a sheet service object and reuse it in the flow
-sheet_service = None
-
-
-# Instance object schema with json version of data dictionary layout
-def load_schema(version, level):
+# Load the data dictionary template version in a Schema instance
+def load_layout(version, level):
     """
-    :param version: string, Version of the required data dictionary schema, is used to construct the json path
-    :param level: string, Level of the required data dictionary schema, it can be Object or Field
-    :return: entities.dd_layout.Schema, Object Schema with data dictionary meta data
+    :param version: string, version of the required schema
+    :param level: string, indicates schema type, object or field
+    :return: template, dictionary meta data info for version and level
     """
-    stt.logger.info('load_schema is being calling with the params: version={}, level={}'.
-                    format(version, level))
+    path = '../resources/schemas/{version}/{level}_schema.json'.format(version=version, level=level)
+    # Open the defined file and load json data
+    with open(path) as json_file:
+        layout = js.load(json_file)
 
-    template = rh.get_schema_template(version, level)
-    # Creates a list of Attribute object instances with loaded json distribution and order it
-    attrs = map(lambda c: Attribute(c['name'], c['description'], c['position'], c['family'], c['group']), template)
-    attrs = rh.order_schema_template(list(attrs))
-
-    return Schema(version, level, attrs)
+    return layout
 
 
 # Auth google sheets service and get data from defined sheet and spreadsheet range
-def load_sheet(sheet_id, sheet_range, settings):
+def load_sheet(service, sheet_id, sheet_range):
     """
+    :param service: Service, google sheet_service
     :param sheet_id: string, id of the required sheet
     :param sheet_range: string, range definition of the required spreadsheet
-    :param settings: script with default constant project variables
     :return: list, return the content of the spreadsheet
     """
-    stt.logger.info('load_sheet is being calling with the params: sheet_id={}, sheet_range={}'.
-                    format(sheet_id, sheet_range))
+    # API call for get spreadsheet data and metadata
+    values = service.spreadsheets().values().get(spreadsheetId=sheet_id, range=sheet_range).execute()['values']
 
-    global sheet_service
-
-    credentials = rh.get_credentials(settings.secret, settings.scope, settings.credentials)
-    sheet_service = load_service(credentials)
-
-    return rh.get_spreadsheet(sheet_service, sheet_id, sheet_range)
+    return values
 
 
-# Load Google API sheet service
-def load_service(credentials):
-    """
-    :param credentials: oauth2client.client.Credentials, Credentials with the authorization token
-    :return: service, A Resource object with methods for interacting with the service
-    """
-    stt.logger.info('load_service is being calling')
+# Load complete data dictionary from a spreadsheet
+def load_data_dictionary(schema_version, sheet_id):
+    object_range = 'DC-DD-Object!A5:AI'
+    field_range = 'DC-DD-Field!A5:AI'
+    service = gs.sheet_service
 
-    global sheet_service
+    object_layout = load_layout(schema_version, 'object')
+    field_layout = load_layout(schema_version, 'field')
 
-    return rh.get_sheet_service(credentials) if sheet_service is None else sheet_service
+    object_values = load_sheet(service, sheet_id, object_range)
+    field_values = load_sheet(service, sheet_id, field_range)
+
+    object_dd = rh.zip_object_dictionary(object_layout, object_values)
+    field_dd = rh.zip_field_dictionary(field_layout, field_values)
+
+    object_dd['layout_version'] = schema_version
+    object_dd['fields'] = field_dd
+

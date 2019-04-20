@@ -18,13 +18,17 @@ class Schema:
 
 class Attribute:
 
-    def __init__(self, name, description, position, family, group):
+    def __init__(self, name, description, position, family, model):
         self.name = name
         self.description = description
         self.position = position
         self.family = family
-        self.group = group
+        self.model = model
 
     # Override for return 'key: value'
     def __repr__(self):
         return self.name
+
+
+class DataDictionary:
+    pass
