@@ -48,7 +48,7 @@ def read_data_dictionary(layout_vs, sheet_id):
     object_values = read_sheet(sheet_id, table_range)
     field_values = read_sheet(sheet_id, field_range)
 
-    return rh.zip_data_dictionary(layout, object_values, field_values)
+    return rh.create_data_dictionary(layout, object_values, field_values)
 
 
 # Load complete data dictionary from a spreadsheet
@@ -64,4 +64,4 @@ def read_legend_template(layout_vs, sheet_id):
     object_legend_values = read_sheet(sheet_id, object_legend_range)
     field_legend_values = read_sheet(sheet_id, field_legend_range)
 
-    return rh.zip_legend_template(layout_vs, object_legend_values, field_legend_values)
+    return rh.create_legend_template(layout_vs, object_legend_values, field_legend_values)
