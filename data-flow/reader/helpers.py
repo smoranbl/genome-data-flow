@@ -4,7 +4,7 @@ import json as js
 from services import google as gs
 
 
-# Map the values of a object data dictionary
+# Create a dictionary based on template version and content of table and fields
 def create_data_dictionary(version_id, table_values, field_values):
     """
     :param version_id: string, identifier for data dictionary template
@@ -12,66 +12,71 @@ def create_data_dictionary(version_id, table_values, field_values):
     :param field_values: list, result values from spreadsheet, in field data dictionary
     :return: dict, object data dictionary
     """
-    layout = select_template(version_id)
+    data_dictionary = dict(table=None, fields=None)
 
-    data_dictionary = dict()
-
-    data_dictionary['table_dictionary'] = format_data_dictionary(layout['table_layout'], table_values)
-    data_dictionary['field_dictionary'] = format_data_dictionary(layout['field_layout'], field_values)
+    template = select_template(version_id)
+    data_dictionary['table'] = format_data_dictionary(template['table'], table_values[0])
+    data_dictionary['fields'] = [format_data_dictionary(template['field'], values) for values in field_values]
 
     return data_dictionary
 
 
-# Map the values of legend template with it's headers
-# TODO: Revise for adapt to just one legend spreadsheet
-def create_template_dictionary(version_id, object_legend_values, field_legend_values):
+# Create a template based on version and content
+def create_template_dictionary(version_id, values):
     """
     :param version_id: string, version of the legend template
-    :param object_legend_values: list, content of object legend template the spreadsheet
-    :param field_legend_values: list, content of field legend template the spreadsheet
-    :return: dict, schema legend with the data dictionary layout for specific version
+    :param values: list, content of object legend template the spreadsheet
+    :return: dict, template legend with the data dictionary layout for specific version
     """
-    keys = ["alias", "description_en", "description_sp", "order", "required", "type", "model"]
-    schema = {'version': version_id}
+    template = dict(version=version_id)
 
-    object_legend = list(map(format_template_dictionary, object_legend_values))
-    field_legend = list(map(format_template_dictionary, field_legend_values))
+    headers = [header.lower().replace(' ', '_') for header in values.pop(0)]
+    template['table'] = [format_template_dictionary(headers, value) for value in values if value[0] == 'OBJECT']
+    template['field'] = [format_template_dictionary(headers, value) for value in values if value[0] == 'FIELD']
 
-    schema['table_layout'] = [dict(zip(keys, value)) for value in object_legend]
-    schema['field_layout'] = [dict(zip(keys, value)) for value in field_legend]
-
-    return schema
+    return template
 
 
-# TODO: Make documentation and maybe pass the second for to a function
+# Zip and clean the values of legend template with it's headers
 def format_data_dictionary(template, values):
-    dictionary = list()
-
-    # Iterate over spreadsheet data content and dictionary fields to add value to it
-    for value in values:
-        dictionary_row = list()
-
-        for index in range(len(template)):
-            alias = template[index]['alias']
-
-            entity = dict({alias: template[index].copy()})
-            entity[alias]['value'] = value[index]
-
-            dictionary_row.append(entity)
-
-        dictionary.append(dictionary_row)
-
-    return dictionary
-
-
-# TODO: Order value must be integer
-# Format legend template values to standardize
-def format_template_dictionary(values):
     """
-    :param values: list, content of the legend spreadsheet for sheet template
+    :param template: list, data dictionary template with corresponding layout structure
+    :param values: list, data dictionary content
+    :return: dict, merge of template and values to format data dictionary
+    """
+    data_dictionary = dict()
+
+    for index in range(len(values)):
+        item = next((item for item in template if item['order'] == index), None)
+        alias = item['alias'].replace(' ', '_')
+
+        item['value'] = values[index]
+        data_dictionary[alias] = item
+
+    return data_dictionary
+
+
+# Format the template values to standardize
+def format_template_dictionary(headers, values):
+    """
+    :param headers, list, first line of legend spreadsheet
+    :param values: list, content of legend spreadsheet for sheet template
     :return: list, template formatted content
     """
-    return [True if value == 'TRUE' else False if value == 'FALSE' else value.lower() for value in values]
+    template = dict(zip(headers, values))
+    del template['level']
+
+    for key, val in template.items():
+        if key == 'alias':
+            template[key] = val.lower()
+        elif key == 'description_en' or key == 'description_sp':
+            template[key] = val.capitalize()
+        elif key == 'order':
+            template[key] = int(val)
+        elif key == 'required':
+            template[key] = True if val == 'TRUE' else False
+
+    return template
 
 
 # Auth google sheets service and get data from defined sheet and spreadsheet range
@@ -94,7 +99,7 @@ def select_template(version_id):
     :return: template, dictionary meta data info for version and level
     """
     # TODO: Maybe put layout data in sqlite catalog
-    path = '../resources/schemas/schema-{version}.json'.format(version=version_id)
+    path = '../resources/templates/template-{version}.json'.format(version=version_id)
 
     # Open the defined file and read json data
     with open(path) as json_file:

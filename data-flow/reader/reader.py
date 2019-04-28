@@ -21,16 +21,15 @@ def read_data_dictionary(version_id, sheet_id):
 
 
 # Load complete data dictionary from a spreadsheet
-def read_legend_template(version_id, sheet_id):
+def read_template_dictionary(version_id, sheet_id):
     """
     :param version_id: string, identifier of the layout version
     :param sheet_id: string, id of the required sheet
     :return: dict, data dictionary for the specific sheet_id
     """
-    object_legend_range = 'Object-Legend!A2:H'
-    field_legend_range = 'Field-Legend!A2:H'
+    # TODO: Make range generators
+    legend_range = 'Legend!A1:I'
 
-    object_legend_values = rh.select_sheet(sheet_id, object_legend_range)
-    field_legend_values = rh.select_sheet(sheet_id, field_legend_range)
+    legend_values = rh.select_sheet(sheet_id, legend_range)
 
-    return rh.create_template_dictionary(version_id, object_legend_values, field_legend_values)
+    return rh.create_template_dictionary(version_id, legend_values)
