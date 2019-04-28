@@ -55,9 +55,7 @@ def get_sheet_service(credentials):
     :param credentials: oauth2client.client.Credentials, Credentials with the authorization token
     :return: service, A Resource object with methods for interacting with the service
     """
-    # Build http request with the authorization credentials
     http = credentials.authorize(httplib2.Http())
-
     # Create a sheets service object
     return discovery.build(serviceName='sheets', version='v4', http=http)
 
